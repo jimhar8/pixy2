@@ -21,6 +21,7 @@
 #include "qqueue.h"
 #include "colorlut.h"
 #include "calc.h"
+#include "debug.h"
 
 // declare module
 MON_MODULE(CccModule);
@@ -36,6 +37,7 @@ CccModule::CccModule(Interpreter *interpreter) : MonModule(interpreter)
 
     for (i=0; i<CL_NUM_SIGNATURES; i++)
         m_palette[i] = Qt::black;
+
 }
 
 CccModule::~CccModule()
@@ -191,6 +193,7 @@ int CccModule::renderCCB1(uint8_t renderFlags, uint16_t width, uint16_t height, 
 {
     float scale = (float)m_renderer->m_video->activeWidth()/width;
     QImage img(width*scale, height*scale, QImage::Format_ARGB32);
+    QString strCCBlocks = "";
 
     if (renderFlags&RENDER_FLAG_BLEND) // if we're blending, we should be transparent
         img.fill(0x00000000);
@@ -198,9 +201,10 @@ int CccModule::renderCCB1(uint8_t renderFlags, uint16_t width, uint16_t height, 
         img.fill(0xff000000); // otherwise, we're just black
 
     numBlobs /= sizeof(BlobC);
-    renderBlobsC(renderFlags&RENDER_FLAG_BLEND, &img, scale, (BlobC *)blobs, numBlobs);
+    renderBlobsC(renderFlags&RENDER_FLAG_BLEND, &img, scale, (BlobC *)blobs, numBlobs, strCCBlocks);
 
     m_renderer->emitImage(img, renderFlags, "CCC Blobs");
+    m_renderer->emitCCBlocks(strCCBlocks);
 
     return 0;
 }
@@ -268,10 +272,10 @@ void CccModule::renderBlobsA(bool blend, QImage *image, float scale, BlobA2 *blo
     p.end();
 }
 
-void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blobs, uint32_t numBlobs)
+void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blobs, uint32_t numBlobs, QString &strCCBlocks)
 {
     QPainter p;
-    QString str, modelStr;
+    QString str, modelStr, ccString;
     uint x, y, w, h, i;
 
     if (!p.begin(image))
@@ -286,7 +290,8 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
         x = scale*blobs[i].m_x-w/2;
         y = scale*blobs[i].m_y-h/2;
 
-        //DBG("%d %d %d %d", left, right, top, bottom);
+        strCCBlocks += QString("sig: %1,x: %2,y: %3,width: %4,height: %5,index: %6, age: %7\n").arg(blobs[i].m_model).arg(x).arg(y).arg(w).arg(h).arg(blobs[i].m_index).arg(blobs[i].m_age);
+
         if (blend || blobs[i].m_model>CL_NUM_SIGNATURES+1)
             Renderer::drawRect(&p, QRect(x, y, w, h), QColor(Qt::white), 0x40);
         else
@@ -306,7 +311,9 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
         else if ((str=lookup(blobs[i].m_model))=="")
             str = str.sprintf("s=%d", blobs[i].m_model);
 
+
        Renderer::drawText(&p, x+w/2, y+h/2, str);
+
     }
     p.end();
 }

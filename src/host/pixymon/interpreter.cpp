@@ -49,9 +49,35 @@ Interpreter::Interpreter(ConsoleWidget *console, VideoWidget *video, MonParamete
 
     m_renderer = new Renderer(m_video, this);
 
+    // Ideal: start pixy mon tcp servers
+
+    m_pixymonCmdServer = new TCP_CmdServer();
+
+    bool successCmd = m_pixymonCmdServer->listen(QHostAddress::Any, 4200);
+    if(!successCmd)
+    {
+        qFatal("Could not listen on port 4200.");
+    }
+
+    m_pixymonTlmServer = new TCP_TlmServer();
+
+    bool successTlm = m_pixymonTlmServer->listen(QHostAddress::Any, 4201);
+    if(!successTlm)
+    {
+        qFatal("Could not listen on port 4201.");
+    }
+
+    qDebug() << "Ready";
+
     connect(m_console, SIGNAL(textLine(QString)), this, SLOT(command(QString)));
+    connect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));  // Ideal addition
+
     connect(m_console, SIGNAL(controlKey(Qt::Key)), this, SLOT(controlKey(Qt::Key)));
     connect(this, SIGNAL(textOut(QString, uint)), m_console, SLOT(print(QString, uint)));
+    connect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint)));  // Ideal addition
+
+    connect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal addition
+
     connect(this, SIGNAL(enableConsole(bool)), m_console, SLOT(acceptInput(bool)));
     connect(this, SIGNAL(prompt(QString)), m_console, SLOT(prompt(QString)));
     connect(this, SIGNAL(consoleCommand(QString)), m_console, SLOT(command(QString)));
@@ -72,6 +98,16 @@ Interpreter::~Interpreter()
     MonModuleUtil::destroyModules(&m_modules);
     if (m_chirp)
         delete m_chirp;
+
+    disconnect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));
+    disconnect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint)));
+
+    if (m_pixymonCmdServer)
+        delete m_pixymonCmdServer;
+
+    if (m_pixymonCmdServer)
+        delete m_pixymonTlmServer;
+
     DBG("done");
 }
 

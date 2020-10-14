@@ -13,6 +13,8 @@ RC_FILE = resources.rc
 
 SOURCES += main.cpp\
     mainwindow.cpp \
+    tcp_cmdserver.cpp \
+    tcp_tlmserver.cpp \
     videowidget.cpp \
     usblink.cpp \
     console.cpp \
@@ -37,6 +39,8 @@ SOURCES += main.cpp\
     linemodule.cpp
 
 HEADERS  += mainwindow.h \
+    tcp_cmdserver.h \
+    tcp_tlmserver.h \
     videowidget.h \
     usblink.h \
     console.h \

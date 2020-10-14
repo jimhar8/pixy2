@@ -68,6 +68,9 @@ public:
     void emitImage(QImage img, uchar renderFlags, QString desc="");
     void emitFlush();
 
+    void emitCCBlocks(QString strCCBlocks);
+
+
     static void drawLine(QPainter *painter, QColor color, uint x1, uint y1, uint x2, uint y2, uint width=3, Qt::PenStyle style=Qt::SolidLine);
     static void drawText(QPainter *painter, uint x, uint y, const QString &text);
     static void drawRect(QPainter *painter, const QRect &rect, QColor color=QColor(Qt::black), uint alpha=0);
@@ -78,6 +81,7 @@ public:
 signals:
     void image(QImage image, uchar renderFlags, QString desc="");
     void flush();
+    void ccBlocks(QString, uint);
 
 private:
     inline void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b);

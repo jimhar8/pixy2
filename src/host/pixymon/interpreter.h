@@ -31,6 +31,8 @@
 #include "disconnectevent.h"
 #include "usblink.h"
 #include "monparameterdb.h"
+#include "tcp_cmdserver.h"
+#include "tcp_tlmserver.h"
 
 #define PROMPT                     ">"
 #define RUN_POLL_PERIOD_SLOW       500 // msecs
@@ -127,6 +129,8 @@ public:
     VideoWidget *m_video;
     ParameterDB m_pixyParameters;
     MonParameterDB *m_pixymonParameters;
+    TCP_CmdServer *m_pixymonCmdServer;
+    TCP_TlmServer *m_pixymonTlmServer;
 
     friend class ChirpMon;
     friend class Renderer;

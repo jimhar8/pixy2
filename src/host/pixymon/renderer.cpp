@@ -653,3 +653,8 @@ void Renderer::emitFlush()
 {
     emit flush();
 }
+
+void Renderer::emitCCBlocks(QString strCCBlocks)
+{
+    emit ccBlocks(strCCBlocks, 1);
+}

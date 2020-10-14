@@ -39,7 +39,7 @@ private:
     void renderCCQF(uint8_t renderFlags, uint16_t width, uint16_t height);
     void renderCCQS(uint32_t numVals, uint32_t *vals);
     void renderBlobsA(bool blend, QImage *image, float scale, BlobA2 *blobs, uint32_t numBlobs);
-    void renderBlobsC(bool blend, QImage *image, float scale, BlobC *blobs, uint32_t numBlobs);
+    void renderBlobsC(bool blend, QImage *image, float scale, BlobC *blobs, uint32_t numBlobs, QString &strCCBlocks);
     void resetBlobs();
     QString lookup(uint16_t signum);
 
