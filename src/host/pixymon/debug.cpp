@@ -19,7 +19,7 @@
 
 MON_MODULE(Debug);
 
-uint g_debug = 1;
+uint g_debug = 0;
 
 Debug::Debug(Interpreter *interpreter) : MonModule(interpreter)
 {

@@ -135,6 +135,8 @@ public:
     friend class ChirpMon;
     friend class Renderer;
 
+
+
 signals:
     void runState(int state, QString status);
     void textOut(QString text, uint flags=0);
@@ -159,6 +161,7 @@ private slots:
     void controlKey(Qt::Key key);
     void command(const QString &command, bool interactive=true);
     void handleSelection(int x0, int y0, int width, int height);
+    void idealLoadParms(QString);
 
 protected:
     virtual void run();

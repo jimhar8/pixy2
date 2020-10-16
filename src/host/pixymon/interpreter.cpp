@@ -27,6 +27,7 @@
 #include "sleeper.h"
 #include "pixymon.h"
 #include "monmodule.h"
+#include "paramfile.h"
 
 QString printType(uint32_t val, bool parens=false);
 
@@ -70,13 +71,14 @@ Interpreter::Interpreter(ConsoleWidget *console, VideoWidget *video, MonParamete
     qDebug() << "Ready";
 
     connect(m_console, SIGNAL(textLine(QString)), this, SLOT(command(QString)));
-    connect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));  // Ideal addition
+    connect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));  // Ideal cmd addition
+    connect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
 
     connect(m_console, SIGNAL(controlKey(Qt::Key)), this, SLOT(controlKey(Qt::Key)));
     connect(this, SIGNAL(textOut(QString, uint)), m_console, SLOT(print(QString, uint)));
-    connect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint)));  // Ideal addition
+    connect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint)));  // Ideal cmd addition
 
-    connect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal addition
+    connect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal tlm addition
 
     connect(this, SIGNAL(enableConsole(bool)), m_console, SLOT(acceptInput(bool)));
     connect(this, SIGNAL(prompt(QString)), m_console, SLOT(prompt(QString)));
@@ -99,15 +101,23 @@ Interpreter::~Interpreter()
     if (m_chirp)
         delete m_chirp;
 
-    disconnect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));
-    disconnect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint)));
+    disconnect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString))); // Ideal cmd addition
+    disconnect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint))); // Ideal addition
+    disconnect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
+
+    //disconnect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal tlm addition
 
     if (m_pixymonCmdServer)
+    {
+        m_pixymonCmdServer->close();
         delete m_pixymonCmdServer;
+    }
 
     if (m_pixymonCmdServer)
+    {
+        m_pixymonTlmServer->close();
         delete m_pixymonTlmServer;
-
+    }
     DBG("done");
 }
 
@@ -1645,4 +1655,25 @@ void Interpreter::handleUpdateParam()
 void Interpreter::emitActionScriptlet(QString action, QStringList scriptlet)
 {
     emit actionScriptlet(action, scriptlet, false);
+}
+
+void Interpreter::idealLoadParms(QString strPathtoFile)
+{
+
+    ParamFile pf;
+    int res;
+    pf.open(strPathtoFile, true);
+    res = pf.read(PIXY_PARAMFILE_TAG, &this->m_pixyParameters, true);
+    pf.close();
+
+    if (res>=0)
+    {
+        this->saveParams(); // save parameters back to pixy
+        this->execute("close");
+        m_console->print("Parameters have been successfully loaded!  Resetting...\n");
+    }
+
+
+    //emit textOut("response: 0 (0x0)");
+
 }

@@ -290,7 +290,7 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
         x = scale*blobs[i].m_x-w/2;
         y = scale*blobs[i].m_y-h/2;
 
-        strCCBlocks += QString("sig: %1,x: %2,y: %3,width: %4,height: %5,index: %6, age: %7\n").arg(blobs[i].m_model).arg(x).arg(y).arg(w).arg(h).arg(blobs[i].m_index).arg(blobs[i].m_age);
+        strCCBlocks += QString("%1,%2,%3,%4,%5,%6,%7\n").arg(blobs[i].m_model).arg(x).arg(y).arg(w).arg(h).arg(blobs[i].m_index).arg(blobs[i].m_age);
 
         if (blend || blobs[i].m_model>CL_NUM_SIGNATURES+1)
             Renderer::drawRect(&p, QRect(x, y, w, h), QColor(Qt::white), 0x40);
