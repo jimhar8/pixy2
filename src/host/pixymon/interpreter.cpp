@@ -28,6 +28,7 @@
 #include "pixymon.h"
 #include "monmodule.h"
 #include "paramfile.h"
+#include "dataexport.h"
 
 QString printType(uint32_t val, bool parens=false);
 
@@ -73,6 +74,7 @@ Interpreter::Interpreter(ConsoleWidget *console, VideoWidget *video, MonParamete
     connect(m_console, SIGNAL(textLine(QString)), this, SLOT(command(QString)));
     connect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));  // Ideal cmd addition
     connect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
+    connect(m_pixymonCmdServer, SIGNAL(saveImageSignal()), this, SLOT(idealSaveImage()));  // Ideal cmd addition
 
     connect(m_console, SIGNAL(controlKey(Qt::Key)), this, SLOT(controlKey(Qt::Key)));
     connect(this, SIGNAL(textOut(QString, uint)), m_console, SLOT(print(QString, uint)));
@@ -104,6 +106,7 @@ Interpreter::~Interpreter()
     disconnect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString))); // Ideal cmd addition
     disconnect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint))); // Ideal addition
     disconnect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
+    disconnect(m_pixymonCmdServer, SIGNAL(saveImageSignal()), this, SLOT(idealSaveImage()));  // Ideal cmd addition
 
     //disconnect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal tlm addition
 
@@ -1675,5 +1678,16 @@ void Interpreter::idealLoadParms(QString strPathtoFile)
 
 
     //emit textOut("response: 0 (0x0)");
+
+}
+
+void Interpreter::idealSaveImage()
+{
+
+    QString filename;
+
+    filename = uniqueFilename(m_pixymonParameters->value("Document folder").toString(), "image", "png");
+    this->saveImage(filename);
+
 
 }

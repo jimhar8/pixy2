@@ -162,6 +162,7 @@ private slots:
     void command(const QString &command, bool interactive=true);
     void handleSelection(int x0, int y0, int width, int height);
     void idealLoadParms(QString);
+    void idealSaveImage();
 
 protected:
     virtual void run();

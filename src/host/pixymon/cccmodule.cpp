@@ -277,43 +277,89 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
     QPainter p;
     QString str, modelStr, ccString;
     uint x, y, w, h, i;
+    QRgb color;
 
     if (!p.begin(image))
         return;
 
-    for (i=0; i<numBlobs; i++)
+
+
+
+    QImage *bkgImage = this->m_renderer->backgroundImage();
+
+    if (bkgImage->width()!=0)
     {
-        if (blobs[i].m_model==0)
-            continue;
-        w = scale*blobs[i].m_width;
-        h = scale*blobs[i].m_height;
-        x = scale*blobs[i].m_x-w/2;
-        y = scale*blobs[i].m_y-h/2;
-
-        strCCBlocks += QString("%1,%2,%3,%4,%5,%6,%7\n").arg(blobs[i].m_model).arg(x).arg(y).arg(w).arg(h).arg(blobs[i].m_index).arg(blobs[i].m_age);
-
-        if (blend || blobs[i].m_model>CL_NUM_SIGNATURES+1)
-            Renderer::drawRect(&p, QRect(x, y, w, h), QColor(Qt::white), 0x40);
-        else
-            Renderer::drawRect(&p, QRect(x, y, w, h), m_palette[blobs[i].m_model-1], 0xff);
-        // color code
-        if (blobs[i].m_model>CL_NUM_SIGNATURES+1)
+        for (i=0; i<numBlobs; i++)
         {
-            if ((str=lookup(blobs[i].m_model))=="")
+
+            float r=0;
+            float g=0;
+            float b=0;
+            int num = 0;
+
+
+            if (blobs[i].m_model==0)
+                continue;
+            w = scale*blobs[i].m_width;
+            h = scale*blobs[i].m_height;
+            x = scale*blobs[i].m_x-w/2;
+            y = scale*blobs[i].m_y-h/2;
+
+            for (uint row = blobs[i].m_y - blobs[i].m_height; row < blobs[i].m_y + blobs[i].m_height; ++row)  // y-axis
             {
-                modelStr = QString::number(blobs[i].m_model, 8);
-                str = "s=" + modelStr + ", " + QChar(0xa6, 0x03) + "=" + QString::number(blobs[i].m_angle);
+                for (uint col = blobs[i].m_x - blobs[i].m_width; col < blobs[i].m_x + blobs[i].m_width; ++col)  // x-axis
+                {
+                    QColor clrCurrent( bkgImage->pixel( col, row ) );
+
+                    float r_this = clrCurrent.redF();
+                    float g_this = clrCurrent.greenF();
+                    float b_this = clrCurrent.blueF();
+
+                    if (!(r_this > 0.70 || g_this > 0.70 || b_this > 0.70)  && !(r_this < 0.1 && g_this < 0.1 && b_this < 0.1))
+                    {
+                       /* qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
+                                  << r_this << ", "
+                                 << g_this << ", "
+                                  << b_this << ", "
+                                  << clrCurrent.alpha() << ")."
+                                  << "\n"; */
+
+                        r += r_this;
+                        g += g_this;
+                        b += b_this;
+                        num++;
+
+                    }
+
+                }
+
             }
+
+            strCCBlocks += QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11\n").arg(QDateTime::currentMSecsSinceEpoch()).arg(blobs[i].m_model).arg(blobs[i].m_x).arg(blobs[i].m_y).arg(blobs[i].m_width).arg(blobs[i].m_height).arg(blobs[i].m_index).arg(blobs[i].m_age).arg(r/num).arg(g/num).arg(b/num);
+
+            if (blend || blobs[i].m_model>CL_NUM_SIGNATURES+1)
+                Renderer::drawRect(&p, QRect(x, y, w, h), QColor(Qt::white), 0x40);
             else
-                str += QString(", ") + QChar(0xa6, 0x03) + "=" + QString::number(blobs[i].m_angle);
+                Renderer::drawRect(&p, QRect(x, y, w, h), m_palette[blobs[i].m_model-1], 0xff);
+            // color code
+            if (blobs[i].m_model>CL_NUM_SIGNATURES+1)
+            {
+                if ((str=lookup(blobs[i].m_model))=="")
+                {
+                    modelStr = QString::number(blobs[i].m_model, 8);
+                    str = "s=" + modelStr + ", " + QChar(0xa6, 0x03) + "=" + QString::number(blobs[i].m_angle);
+                }
+                else
+                    str += QString(", ") + QChar(0xa6, 0x03) + "=" + QString::number(blobs[i].m_angle);
+
+            }
+            else if ((str=lookup(blobs[i].m_model))=="")
+                str = str.sprintf("s=%d", blobs[i].m_model);
+
+
+           Renderer::drawText(&p, x+w/2, y+h/2, str);
 
         }
-        else if ((str=lookup(blobs[i].m_model))=="")
-            str = str.sprintf("s=%d", blobs[i].m_model);
-
-
-       Renderer::drawText(&p, x+w/2, y+h/2, str);
-
     }
     p.end();
 }
