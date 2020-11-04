@@ -22,6 +22,7 @@
 #include "colorlut.h"
 #include "calc.h"
 #include "debug.h"
+#include <QtMath>
 
 // declare module
 MON_MODULE(CccModule);
@@ -37,6 +38,7 @@ CccModule::CccModule(Interpreter *interpreter) : MonModule(interpreter)
 
     for (i=0; i<CL_NUM_SIGNATURES; i++)
         m_palette[i] = Qt::black;
+
 
 }
 
@@ -282,9 +284,6 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
     if (!p.begin(image))
         return;
 
-
-
-
     QImage *bkgImage = this->m_renderer->backgroundImage();
 
     if (bkgImage->width()!=0)
@@ -292,11 +291,9 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
         for (i=0; i<numBlobs; i++)
         {
 
-            float r=0;
-            float g=0;
-            float b=0;
-            int num = 0;
-
+            qreal cosVal = 0;
+            qreal sinVal = 0;
+            int numPixels = 0;
 
             if (blobs[i].m_model==0)
                 continue;
@@ -305,37 +302,72 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
             x = scale*blobs[i].m_x-w/2;
             y = scale*blobs[i].m_y-h/2;
 
+            QRect region(blobs[i].m_x-w/2, blobs[i].m_y-h/2, blobs[i].m_width, blobs[i].m_height);
+
             for (uint row = blobs[i].m_y - blobs[i].m_height; row < blobs[i].m_y + blobs[i].m_height; ++row)  // y-axis
             {
                 for (uint col = blobs[i].m_x - blobs[i].m_width; col < blobs[i].m_x + blobs[i].m_width; ++col)  // x-axis
                 {
                     QColor clrCurrent( bkgImage->pixel( col, row ) );
 
-                    float r_this = clrCurrent.redF();
-                    float g_this = clrCurrent.greenF();
-                    float b_this = clrCurrent.blueF();
+                    int hue_this = clrCurrent.hsvHue();
+                    int sat_this = clrCurrent.hsvSaturation();
+                    int lgt_this = clrCurrent.lightness();
 
-                    if (!(r_this > 0.70 || g_this > 0.70 || b_this > 0.70)  && !(r_this < 0.1 && g_this < 0.1 && b_this < 0.1))
+                    /*qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
+                              << hue_this << ", "
+                              << sat_this << ", "
+                              << lgt_this << ")."
+                              << "\n";*/
+
+                    if (sat_this > m_interpreter->m_satFiltMin && lgt_this >= m_interpreter->m_lightFiltMin && lgt_this <= m_interpreter->m_lightFiltMax)
                     {
-                       /* qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
-                                  << r_this << ", "
-                                 << g_this << ", "
-                                  << b_this << ", "
-                                  << clrCurrent.alpha() << ")."
-                                  << "\n"; */
+                        cosVal += qCos(hue_this * M_PI / 180.0);
+                        sinVal += qSin(hue_this * M_PI / 180.0);
 
-                        r += r_this;
-                        g += g_this;
-                        b += b_this;
-                        num++;
+                        numPixels++;
+
 
                     }
+
 
                 }
 
             }
 
-            strCCBlocks += QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11\n").arg(QDateTime::currentMSecsSinceEpoch()).arg(blobs[i].m_model).arg(blobs[i].m_x).arg(blobs[i].m_y).arg(blobs[i].m_width).arg(blobs[i].m_height).arg(blobs[i].m_index).arg(blobs[i].m_age).arg(r/num).arg(g/num).arg(b/num);
+            // Debug
+            if (numPixels == 0)
+            {
+                for (uint row = blobs[i].m_y - blobs[i].m_height; row < blobs[i].m_y + blobs[i].m_height; ++row)  // y-axis
+                {
+                    for (uint col = blobs[i].m_x - blobs[i].m_width; col < blobs[i].m_x + blobs[i].m_width; ++col)  // x-axis
+                    {
+                        QColor clrCurrent( bkgImage->pixel( col, row ) );
+
+                        int hue_this = clrCurrent.hsvHue();
+                        int sat_this = clrCurrent.hsvSaturation();
+                        int lgt_this = clrCurrent.lightness();
+
+                       /* qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
+                                  << hue_this << ", "
+                                  << sat_this << ", "
+                                  << lgt_this << ")."
+                                  << "\n";*/
+                    }
+                }
+            }
+
+
+            qreal avgDegrees = qAtan2(sinVal , cosVal) * 180.0 / M_PI;            
+
+            if (sinVal < 0)
+            {
+                avgDegrees += 360.0;
+            }
+
+
+            strCCBlocks += QString("%1,%2,%3,%4,%5,%6,%7,%8,%9\n").arg(QDateTime::currentMSecsSinceEpoch()).arg(blobs[i].m_model).arg(blobs[i].m_x).arg(blobs[i].m_y).arg(blobs[i].m_width).arg(blobs[i].m_height).arg(blobs[i].m_index).arg(blobs[i].m_age).arg(avgDegrees);
+
 
             if (blend || blobs[i].m_model>CL_NUM_SIGNATURES+1)
                 Renderer::drawRect(&p, QRect(x, y, w, h), QColor(Qt::white), 0x40);
@@ -354,7 +386,7 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
 
             }
             else if ((str=lookup(blobs[i].m_model))=="")
-                str = str.sprintf("s=%d", blobs[i].m_model);
+                str = str.sprintf("s=%d %.1f", blobs[i].m_model, avgDegrees);
 
 
            Renderer::drawText(&p, x+w/2, y+h/2, str);

@@ -610,7 +610,7 @@ void Renderer::drawText(QPainter *painter, uint x, uint y, const QString &text)
 #ifdef __MACOS__
     QFont font("verdana", 18);
 #else
-    QFont font("verdana", 12);
+    QFont font("verdana", 10);
 #endif
     painter->setFont(font);
 
