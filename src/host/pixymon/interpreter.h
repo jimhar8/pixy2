@@ -132,6 +132,10 @@ public:
     TCP_CmdServer *m_pixymonCmdServer;
     TCP_TlmServer *m_pixymonTlmServer;
 
+    int m_satFiltMin;
+    int m_lightFiltMin;
+    int m_lightFiltMax;
+
     friend class ChirpMon;
     friend class Renderer;
 
@@ -163,6 +167,7 @@ private slots:
     void handleSelection(int x0, int y0, int width, int height);
     void idealLoadParms(QString);
     void idealSaveImage();
+    void idealHueFilter(int satFiltMin = 120, int lightFiltMin = 70, int lightFiltMax = 180 );
 
 protected:
     virtual void run();
@@ -259,6 +264,8 @@ private:
     QString m_versionType;
     QString m_initScript;
     QString m_status;
+
+
 };
 
 

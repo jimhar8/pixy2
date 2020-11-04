@@ -49,6 +49,11 @@ Interpreter::Interpreter(ConsoleWidget *console, VideoWidget *video, MonParamete
     m_running = -1; // set to bogus value to force update
     m_chirp = NULL;
 
+    m_satFiltMin = 120;
+    m_lightFiltMin = 70;
+    m_lightFiltMax = 180;
+
+
     m_renderer = new Renderer(m_video, this);
 
     // Ideal: start pixy mon tcp servers
@@ -75,6 +80,7 @@ Interpreter::Interpreter(ConsoleWidget *console, VideoWidget *video, MonParamete
     connect(m_pixymonCmdServer, SIGNAL(mySignal(QString)), this, SLOT(command(QString)));  // Ideal cmd addition
     connect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
     connect(m_pixymonCmdServer, SIGNAL(saveImageSignal()), this, SLOT(idealSaveImage()));  // Ideal cmd addition
+    connect(m_pixymonCmdServer, SIGNAL(hueFilterSignal(int,int,int)), this, SLOT(idealHueFilter(int,int,int)));  // Ideal cmd addition
 
     connect(m_console, SIGNAL(controlKey(Qt::Key)), this, SLOT(controlKey(Qt::Key)));
     connect(this, SIGNAL(textOut(QString, uint)), m_console, SLOT(print(QString, uint)));
@@ -107,6 +113,7 @@ Interpreter::~Interpreter()
     disconnect(this, SIGNAL(textOut(QString, uint)), m_pixymonCmdServer, SLOT(writeResponse(QString, uint))); // Ideal addition
     disconnect(m_pixymonCmdServer, SIGNAL(loadPrmsSignal(QString)), this, SLOT(idealLoadParms(QString)));  // Ideal cmd addition
     disconnect(m_pixymonCmdServer, SIGNAL(saveImageSignal()), this, SLOT(idealSaveImage()));  // Ideal cmd addition
+    disconnect(m_pixymonCmdServer, SIGNAL(hueFilterSignal(int,int,int)), this, SLOT(idealHueFilter(int,int,int)));  // Ideal cmd addition
 
     //disconnect(m_renderer, SIGNAL(ccBlocks(QString, uint)), m_pixymonTlmServer, SLOT(writeCCBlock(QString, uint)));  // Ideal tlm addition
 
@@ -1689,5 +1696,14 @@ void Interpreter::idealSaveImage()
     filename = uniqueFilename(m_pixymonParameters->value("Document folder").toString(), "image", "png");
     this->saveImage(filename);
 
+
+}
+
+void Interpreter::idealHueFilter(int satFiltMin, int lightFiltMin, int lightFiltMax)
+{
+
+    m_satFiltMin = satFiltMin;
+    m_lightFiltMin = lightFiltMin;
+    m_lightFiltMax = lightFiltMax;
 
 }
