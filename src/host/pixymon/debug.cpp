@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "interpreter.h"
 #include "parameters.h"
+#include "mainwindow.h"
 
 MON_MODULE(Debug);
 
@@ -33,7 +34,8 @@ void Debug::paramChange()
     QVariant val;
 
     if (pixymonParameterChanged("Debug", &val))
+    {
         g_debug = val.toUInt();
-
+    }
 }
 

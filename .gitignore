@@ -11,3 +11,4 @@
 src/host/pixymon/pixymon.pro.user
 src/host/build-pixymon-Desktop_Qt_5_15_1_MinGW_32_bit-Release/
 src/host/build-pixymon-Desktop_Qt_5_15_1_MinGW_32_bit-Debug/
+build/libpixyusb2/libpixy2.a

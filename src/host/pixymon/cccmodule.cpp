@@ -338,6 +338,8 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
             // Debug
             if (numPixels == 0)
             {
+                //qDebug() << m_interpreter->m_lightFiltMin;
+
                 for (uint row = blobs[i].m_y - blobs[i].m_height; row < blobs[i].m_y + blobs[i].m_height; ++row)  // y-axis
                 {
                     for (uint col = blobs[i].m_x - blobs[i].m_width; col < blobs[i].m_x + blobs[i].m_width; ++col)  // x-axis
@@ -348,11 +350,11 @@ void CccModule::renderBlobsC(bool blend, QImage *image, float scale, BlobC *blob
                         int sat_this = clrCurrent.hsvSaturation();
                         int lgt_this = clrCurrent.lightness();
 
-                       /* qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
+                        /*qDebug() << "Pixel at [" << col << "," << row << "] contains color ("
                                   << hue_this << ", "
                                   << sat_this << ", "
                                   << lgt_this << ")."
-                                  << "\n";*/
+                                  << "\n"; */
                     }
                 }
             }
